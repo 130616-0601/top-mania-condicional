@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Controle de Condicional</title>
+
+<style>
+body{margin:0;font-family:Arial;background:#0b0b0b;color:#fff}
+header{padding:15px;font-size:24px;font-weight:bold;color:#ff2a2a;border-bottom:2px solid #ff2a2a}
+.container{display:flex;height:calc(100vh - 60px)}
+.left{width:300px;border-right:2px solid #ff2a2a;padding:10px}
+.right{flex:1;padding:15px}
+input{width:100%;padding:10px;margin-bottom:10px;background:#111;border:1px solid #ff2a2a;color:#fff}
+button{padding:10px;border:none;cursor:pointer;margin-top:5px}
+.btn-red{background:#ff2a2a;color:#fff}
+.btn-green{background:#00c853;color:#fff}
+.btn-gray{background:#333;color:#fff}
+.cliente{border:1px solid #ff2a2a;padding:8px;margin:5px 0;cursor:pointer}
+.cod{border:1px solid #ff2a2a;padding:6px;margin:4px 0;display:flex;justify-content:space-between}
+.copy{font-size:11px;background:#ff2a2a;padding:3px}
+.modo{padding:8px;border:1px solid #ff2a2a;cursor:pointer;margin-right:5px}
+.ativo{background:#ff2a2a}
+.aberto{color:red}
+.finalizado{color:#00c853}
+#logoBox{display:flex;justify-content:center;align-items:center;height:100%;opacity:0.1}
+#logoBox img{width:80%}
+#sistema{display:none}
+</style>
+</head>
+
+<body>
+
+<header>CONTROLE DE CONDICIONAL</header>
+
+<div class="container">
+
+<div class="left">
+
+<form id="formCliente">
+<input id="nome" placeholder="Nome" required>
+<input id="cpf" placeholder="CPF" required>
+<input id="tel" placeholder="Telefone">
+<button class="btn-red" type="submit">Criar Cliente</button>
+</form>
+
+<input id="buscar" placeholder="Digite o CPF">
+<button class="btn-gray" onclick="buscarCliente()">Buscar</button>
+
+<div id="listaClientes"></div>
+
+</div>
+
+<div class="right">
+
+<div id="logoBox">
+<img src="logo.png">
+</div>
+
+<div id="sistema">
+
+<h2 id="clienteNome"></h2>
+
+<button class="btn-red" onclick="novoCond()">Novo Condicional</button>
+<button class="btn-gray" onclick="fechar()">Fechar</button>
+
+<hr>
+
+<div id="historico"></div>
+
+<hr>
+
+<span id="addBtn" class="modo ativo">ADICIONAR</span>
+<span id="retBtn" class="modo">RETIRAR</span>
+
+<input id="scan" placeholder="Bipar código + ENTER">
+
+<button onclick="manualAdd()">Adicionar manual</button>
+<button onclick="manualRet()">Retirar manual</button>
+
+<button onclick="imprimirEntrega()">Imprimir Entrega</button>
+<button onclick="imprimirFinal()">Imprimir Final</button>
+
+<button class="btn-green" onclick="finalizar()">Finalizar</button>
+
+<h3 id="total">Total: 0</h3>
+<div id="lista"></div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let clientes=[]
+let clienteAtual=null
+let condAtual=null
+let modo='add'
+
+// 🔥 CARREGAR COM SEGURANÇA
+window.onload = function(){
+try{
+let dados = localStorage.getItem("clientes")
+if(dados){
+clientes = JSON.parse(dados)
+}
+}catch(e){
+clientes=[]
+}
+renderClientes()
+}
+
+// SALVAR
+function salvar(){
+try{
+localStorage.setItem("clientes", JSON.stringify(clientes))
+}catch(e){}
+}
+
+// criar cliente
+formCliente.onsubmit=function(e){
+e.preventDefault()
+
+let n=nome.value.trim()
+let c=cpf.value.trim()
+
+if(!n||!c)return alert("Preencha")
+
+let existe=clientes.find(x=>x.cpf===c)
+
+if(existe){
+abrirCliente(existe)
+return
+}
+
+let novo={nome:n,cpf:c,conds:[]}
+clientes.push(novo)
+
+salvar()
+
+nome.value=""
+cpf.value=""
+tel.value=""
+
+renderClientes()
+abrirCliente(novo)
+}
+
+// render clientes
+function renderClientes(){
+listaClientes.innerHTML=""
+clientes.forEach(c=>{
+let d=document.createElement("div")
+d.className="cliente"
+d.innerText=c.nome
+d.onclick=()=>abrirCliente(c)
+listaClientes.appendChild(d)
+})
+}
+
+// 🔥 CORRIGIDO AQUI (ISOLAMENTO TOTAL)
+function abrirCliente(c){
+clienteAtual = c
+condAtual = null
+lista.innerHTML = ""
+total.innerText = "Total: 0"
+
+logoBox.style.display="none"
+sistema.style.display="block"
+clienteNome.innerText=c.nome
+
+renderHistorico()
+}
+
+// 🔥 CORRIGIDO AQUI
+function fechar(){
+clienteAtual = null
+condAtual = null
+
+lista.innerHTML = ""
+total.innerText = "Total: 0"
+
+sistema.style.display="none"
+logoBox.style.display="flex"
+}
+
+// novo condicional
+function novoCond(){
+if(!clienteAtual){
+alert("Selecione um cliente")
+return
+}
+
+condAtual={
+data:new Date().toLocaleDateString(),
+itens:[],
+final:false
+}
+
+clienteAtual.conds.push(condAtual)
+
+salvar()
+
+render()
+renderHistorico()
+}
+
+// histórico
+function renderHistorico(){
+historico.innerHTML=""
+clienteAtual.conds.forEach(c=>{
+let d=document.createElement("div")
+d.className=c.final?"finalizado":"aberto"
+d.innerText=c.data+" - "+(c.final?"finalizado":"em aberto")
+d.onclick=()=>{
+condAtual=c
+render()
+}
+historico.appendChild(d)
+})
+}
+
+// modos
+addBtn.onclick=()=>{modo='add';addBtn.classList.add('ativo');retBtn.classList.remove('ativo')}
+retBtn.onclick=()=>{modo='ret';retBtn.classList.add('ativo');addBtn.classList.remove('ativo')}
+
+// scanner
+scan.addEventListener("keydown",e=>{
+if(e.key==="Enter"){
+let c=scan.value.trim()
+scan.value=""
+processar(c)
+}
+})
+
+// processar
+function processar(c){
+if(!condAtual)return
+
+if(modo==="add"){
+condAtual.itens.push(c)
+}else{
+let i=condAtual.itens.indexOf(c)
+if(i===-1)return alert("Código não encontrado")
+condAtual.itens.splice(i,1)
+}
+
+salvar()
+render()
+}
+
+// render lista
+function render(){
+lista.innerHTML=""
+if(!condAtual)return
+
+condAtual.itens.forEach(c=>{
+let d=document.createElement("div")
+d.className="cod"
+d.innerHTML=c+" <span class='copy' onclick='navigator.clipboard.writeText(\""+c+"\")'>copiar</span>"
+lista.appendChild(d)
+})
+
+total.innerText="Total: "+condAtual.itens.length
+}
+
+// manual
+function manualAdd(){
+let c=prompt("Código")
+if(c)processar(c)
+}
+
+function manualRet(){
+let c=prompt("Código")
+if(c){modo='ret';processar(c)}
+}
+
+// finalizar
+function finalizar(){
+condAtual.final=true
+salvar()
+renderHistorico()
+alert("Finalizado")
+}
+
+// impressão
+function imprimirEntrega(){
+let txt="CONDICIONAL\n\nCliente: "+clienteAtual.nome+"\n\n"
+condAtual.itens.forEach(c=>txt+=c+"\n")
+txt+="\nAss: ____"
+imprimir(txt)
+}
+
+function imprimirFinal(){
+let txt="FINAL\n\nCliente: "+clienteAtual.nome+"\n\n"
+condAtual.itens.forEach(c=>txt+=c+"\n")
+imprimir(txt)
+}
+
+function imprimir(t){
+let w=window.open()
+w.document.write("<pre>"+t+"</pre>")
+w.print()
+}
+
+// buscar CPF
+function buscarCliente(){
+let cpfBusca = buscar.value.trim()
+let encontrado = clientes.find(c => c.cpf === cpfBusca)
+if(!encontrado)return alert("Cliente não encontrado")
+abrirCliente(encontrado)
+}
+
+</script>
+
+</body>
+</html>
