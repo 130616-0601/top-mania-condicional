@@ -1,172 +1,101 @@
-<script>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Controle de Condicional</title>
 
-let clientes = JSON.parse(localStorage.getItem("clientes")||"[]")
-let clienteAtual=null
-let condAtual=null
-let modo='add'
+<style>
+body{margin:0;font-family:Arial;background:#0b0b0b;color:#fff}
+header{padding:15px;font-size:24px;color:#ff2a2a;border-bottom:2px solid #ff2a2a}
 
-function salvar(){
-localStorage.setItem("clientes",JSON.stringify(clientes))
+.container{display:flex;height:calc(100vh - 60px)}
+
+.left{width:300px;border-right:2px solid #ff2a2a;padding:10px}
+.right{flex:1;padding:15px;position:relative}
+
+input{width:100%;padding:10px;margin-bottom:10px;background:#111;border:1px solid #ff2a2a;color:#fff}
+
+button{padding:10px;border:none;cursor:pointer;margin-top:5px}
+
+.btn-red{background:#ff2a2a;color:#fff}
+.btn-green{background:#00c853;color:#fff}
+.btn-gray{background:#333;color:#fff}
+
+.cliente{border:1px solid #ff2a2a;padding:8px;margin:5px 0;cursor:pointer}
+
+.cod{border:1px solid #ff2a2a;padding:6px;margin:4px 0;display:flex;justify-content:space-between}
+
+.copy{font-size:11px;background:#ff2a2a;padding:3px}
+
+.modo{padding:8px;border:1px solid #ff2a2a;cursor:pointer;margin-right:5px}
+.ativo{background:#ff2a2a}
+
+.aberto{color:red}
+.finalizado{color:#00c853}
+
+#logoBox{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+display:flex;
+justify-content:center;
+align-items:center;
+opacity:0.05;
 }
 
-function criarCliente(){
-let n=nome.value.trim()
-let c=cpf.value.trim()
-let t=prompt("Telefone do cliente:")
+#logoBox img{width:60%}
 
-if(!n||!c)return alert("Preencha")
+#sistema{display:none}
+</style>
+</head>
 
-let existe=clientes.find(x=>x.cpf===c)
-if(existe){abrirCliente(existe);return}
+<body>
 
-let novo={nome:n,cpf:c,telefone:t,conds:[]}
-clientes.push(novo)
+<header>CONTROLE DE CONDICIONAL</header>
 
-salvar()
-renderClientes()
-abrirCliente(novo)
+<div class="container">
 
-nome.value=""
-cpf.value=""
-}
+<div class="left">
 
-function renderClientes(){
-listaClientes.innerHTML=""
-clientes.forEach(c=>{
-let d=document.createElement("div")
-d.className="cliente"
-d.innerText=c.nome+" ("+c.telefone+")"
-d.onclick=()=>abrirCliente(c)
-listaClientes.appendChild(d)
-})
-}
+<input id="nome" placeholder="Nome">
+<input id="cpf" placeholder="CPF">
+<button class="btn-red" onclick="criarCliente()">Criar Cliente</button>
 
-function abrirCliente(c){
-clienteAtual=c
-condAtual=null
-lista.innerHTML=""
-total.innerText="Total: 0"
+<input id="buscar" placeholder="Buscar CPF">
+<button class="btn-gray" onclick="buscarCliente()">Buscar</button>
 
-sistema.style.display="block"
-clienteNome.innerText=c.nome+" - "+c.telefone
+<div id="listaClientes"></div>
 
-renderHistorico()
-}
+</div>
 
-function fechar(){
-clienteAtual=null
-condAtual=null
-sistema.style.display="none"
-}
+<div class="right">
 
-function novoCond(){
-condAtual={data:new Date().toLocaleDateString(),itens:[],final:false}
-clienteAtual.conds.push(condAtual)
-salvar()
-render()
-renderHistorico()
-}
+<div id="logoBox">
+<img src="logo.png">
+</div>
 
-function renderHistorico(){
-historico.innerHTML=""
-clienteAtual.conds.forEach(c=>{
-let d=document.createElement("div")
-d.className=c.final?"finalizado":"aberto"
-d.innerText=c.data+" - "+(c.final?"finalizado":"em aberto")
-d.onclick=()=>{condAtual=c;render()}
-historico.appendChild(d)
-})
-}
+<div id="sistema">
 
-addBtn.onclick=()=>{modo='add';addBtn.classList.add('ativo');retBtn.classList.remove('ativo')}
-retBtn.onclick=()=>{modo='ret';retBtn.classList.add('ativo');addBtn.classList.remove('ativo')}
+<h2 id="clienteNome"></h2>
 
-scan.addEventListener("keydown",e=>{
-if(e.key==="Enter"){
-let c=scan.value.trim()
-scan.value=""
-processar(c)
-}
-})
+<button class="btn-red" onclick="novoCond()">Novo Condicional</button>
+<button class="btn-gray" onclick="fechar()">Fechar</button>
 
-function processar(c){
-if(!condAtual)return
+<hr>
 
-if(modo==="add"){
-condAtual.itens.push({codigo:c,status:"pendente"})
-}else{
-let item=condAtual.itens.find(x=>x.codigo===c && x.status==="pendente")
-if(!item)return alert("Código não encontrado ou já devolvido")
-item.status="devolvido"
-}
+<div id="historico"></div>
 
-salvar()
-render()
-}
+<hr>
 
-function render(){
-lista.innerHTML=""
+<span id="addBtn" class="modo ativo">ADICIONAR</span>
+<span id="retBtn" class="modo">RETIRAR</span>
 
-condAtual.itens.forEach(i=>{
-let d=document.createElement("div")
-d.className="cod"
+<input id="scan" placeholder="Bipar código + ENTER">
 
-let cor = i.status==="pendente" ? "#fff" : "#00c853"
+<button onclick="manualAdd()">Adicionar manual</button>
+<button onclick="manualRet()">Retirar manual</button>
 
-d.innerHTML=
-"<span style='color:"+cor+"'>"+i.codigo+" ("+i.status+")</span> "+
-"<span class='copy' onclick='navigator.clipboard.writeText(\""+i.codigo+"\")'>copiar</span>"
-
-lista.appendChild(d)
-})
-
-let pendentes = condAtual.itens.filter(x=>x.status==="pendente").length
-total.innerText="Pendentes: "+pendentes
-}
-
-function manualAdd(){
-let c=prompt("Código")
-if(c)processar(c)
-}
-
-function manualRet(){
-let c=prompt("Código")
-if(c){modo='ret';processar(c)}
-}
-
-function finalizar(){
-condAtual.final=true
-salvar()
-renderHistorico()
-alert("Finalizado")
-}
-
-function imprimirEntrega(){
-let txt="CONDICIONAL\n\nCliente: "+clienteAtual.nome+"\n\n"
-condAtual.itens.forEach(i=>txt+=i.codigo+" - "+i.status+"\n")
-txt+="\nAss: ____"
-imprimir(txt)
-}
-
-function imprimirFinal(){
-let txt="FINAL\n\nCliente: "+clienteAtual.nome+"\n\n"
-condAtual.itens.forEach(i=>txt+=i.codigo+" - "+i.status+"\n")
-imprimir(txt)
-}
-
-function imprimir(t){
-let w=window.open()
-w.document.write("<pre>"+t+"</pre>")
-w.print()
-}
-
-function buscarCliente(){
-let cpfBusca=buscar.value.trim()
-let c=clientes.find(x=>x.cpf===cpfBusca)
-if(!c)return alert("Não encontrado")
-abrirCliente(c)
-}
-
-renderClientes()
-
-</script>
+<button onclick="imprimirEntrega()">Imprimir Entrega</button>
+<button onclick="imprimir
