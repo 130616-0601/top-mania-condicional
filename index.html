@@ -7,25 +7,36 @@
 <style>
 body{margin:0;font-family:Arial;background:#0b0b0b;color:#fff}
 header{padding:15px;font-size:24px;color:#ff2a2a;border-bottom:2px solid #ff2a2a}
-
 .container{display:flex;height:calc(100vh - 60px)}
-
 .left{width:320px;border-right:2px solid #ff2a2a;padding:10px}
 .right{flex:1;padding:15px}
 
 input{width:100%;padding:10px;margin-bottom:10px;background:#111;border:1px solid #ff2a2a;color:#fff}
-
 button{padding:8px;margin:3px;cursor:pointer}
 
 .modo{border:1px solid #ff2a2a;padding:5px;cursor:pointer}
 .ativo{background:#ff2a2a}
 
-.cod{border:1px solid #ff2a2a;padding:6px;margin:4px 0;display:flex;justify-content:space-between}
+.cod{
+border:1px solid #ff2a2a;
+padding:6px;
+margin:4px 0;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
 
-.copy{background:#ff2a2a;font-size:10px;padding:3px;cursor:pointer}
+.copy{
+background:#ff2a2a;
+font-size:10px;
+padding:3px;
+cursor:pointer;
+}
 
-.devolvido{color:#00c853}
-
+.devolvido{
+color:#00c853;
+text-decoration:line-through;
+}
 </style>
 </head>
 
@@ -36,7 +47,6 @@ button{padding:8px;margin:3px;cursor:pointer}
 <div class="container">
 
 <div class="left">
-
 <input id="nome" placeholder="Nome">
 <input id="cpf" placeholder="CPF">
 <input id="telefone" placeholder="Telefone">
@@ -44,7 +54,6 @@ button{padding:8px;margin:3px;cursor:pointer}
 <button onclick="criarCliente()">Criar Cliente</button>
 
 <div id="listaClientes"></div>
-
 </div>
 
 <div class="right">
@@ -53,6 +62,7 @@ button{padding:8px;margin:3px;cursor:pointer}
 
 <button onclick="novoCond()">Novo Condicional</button>
 <button onclick="finalizar()">Finalizar</button>
+<button onclick="fechar()">Fechar</button>
 
 <hr>
 
@@ -66,11 +76,10 @@ button{padding:8px;margin:3px;cursor:pointer}
 <button onclick="imprimirEntrega()">Imprimir Entrega</button>
 <button onclick="imprimirFinal()">Imprimir Final</button>
 
-<h3 id="total"></h3>
+<h3 id="total">Total: 0</h3>
 <div id="lista"></div>
 
 </div>
-
 </div>
 
 <script>
@@ -85,48 +94,84 @@ function salvar(){
 localStorage.setItem("clientes",JSON.stringify(clientes))
 }
 
+// CRIAR CLIENTE
 function criarCliente(){
-let n=nome.value
-let c=cpf.value
-let t=telefone.value
+let n=nome.value.trim()
+let c=cpf.value.trim()
+let t=telefone.value.trim()
 
 if(!n||!c)return alert("Preencha")
 
 clientes.push({nome:n,cpf:c,telefone:t,conds:[]})
 salvar()
 renderClientes()
+
+nome.value=""
+cpf.value=""
+telefone.value=""
 }
 
+// LISTAR CLIENTES
 function renderClientes(){
 listaClientes.innerHTML=""
+
 clientes.forEach((c,i)=>{
 let d=document.createElement("div")
-d.innerHTML=`${c.nome}<br>CPF:${c.cpf}<br>Tel:${c.telefone}`
+
+d.innerHTML=`
+<b>${c.nome}</b><br>
+CPF:${c.cpf}<br>
+Tel:${c.telefone}
+<hr>
+`
+
 d.onclick=()=>abrirCliente(i)
+
 listaClientes.appendChild(d)
 })
 }
 
+// ABRIR CLIENTE
 function abrirCliente(i){
 clienteAtual=clientes[i]
-clienteNome.innerText=`${clienteAtual.nome} | CPF:${clienteAtual.cpf} | Tel:${clienteAtual.telefone}`
+condAtual=null
+
+clienteNome.innerText=
+`${clienteAtual.nome} | CPF:${clienteAtual.cpf} | Tel:${clienteAtual.telefone}`
+
+render()
 }
 
+// NOVO CONDICIONAL
 function novoCond(){
 if(!clienteAtual)return alert("Selecione cliente")
 
 condAtual={data:new Date().toLocaleDateString(),itens:[],final:false}
+
 clienteAtual.conds.push(condAtual)
+
 salvar()
 render()
 }
 
-addBtn.onclick=()=>{modo="add";addBtn.classList.add("ativo");retBtn.classList.remove("ativo")}
-retBtn.onclick=()=>{modo="ret";retBtn.classList.add("ativo");addBtn.classList.remove("ativo")}
+// MODO
+addBtn.onclick=()=>{
+modo="add"
+addBtn.classList.add("ativo")
+retBtn.classList.remove("ativo")
+}
 
+retBtn.onclick=()=>{
+modo="ret"
+retBtn.classList.add("ativo")
+addBtn.classList.remove("ativo")
+}
+
+// LEITOR
 scan.addEventListener("keydown",e=>{
 if(e.key==="Enter"){
-let cod=scan.value
+
+let cod=scan.value.trim()
 scan.value=""
 
 if(!condAtual)return alert("Crie condicional")
@@ -135,7 +180,8 @@ if(modo==="add"){
 condAtual.itens.push({codigo:cod,status:"pendente"})
 }else{
 let item=condAtual.itens.find(x=>x.codigo===cod && x.status==="pendente")
-if(item)item.status="devolvido"
+if(!item)return alert("Código não encontrado")
+item.status="devolvido"
 }
 
 salvar()
@@ -143,20 +189,27 @@ render()
 }
 })
 
+// RENDER
 function render(){
 lista.innerHTML=""
+
+if(!condAtual){
+total.innerText="Total: 0"
+return
+}
 
 condAtual.itens.forEach(i=>{
 let d=document.createElement("div")
 d.className="cod"
 
-let status=i.status==="devolvido"?"(devolvido)":""
-
 d.innerHTML=`
 <span class="${i.status==="devolvido"?"devolvido":""}">
-${i.codigo} ${status}
+${i.codigo} ${i.status==="devolvido"?"(devolvido)":""}
 </span>
-<span class="copy" onclick="navigator.clipboard.writeText('${i.codigo}')">copiar</span>
+
+<span class="copy" onclick="navigator.clipboard.writeText('${i.codigo}')">
+copiar
+</span>
 `
 
 lista.appendChild(d)
@@ -166,25 +219,42 @@ let pendentes=condAtual.itens.filter(x=>x.status==="pendente").length
 total.innerText="Pendentes: "+pendentes
 }
 
+// FINALIZAR
 function finalizar(){
+if(!condAtual)return
 condAtual.final=true
 salvar()
-alert("Finalizado")
+alert("Condicional finalizado")
 }
 
+// FECHAR
+function fechar(){
+clienteAtual=null
+condAtual=null
+clienteNome.innerText=""
+lista.innerHTML=""
+total.innerText="Total: 0"
+}
+
+// IMPRESSÃO ENTREGA
 function imprimirEntrega(){
+if(!condAtual)return
+
 let txt=`CONDICIONAL\n\nCliente: ${clienteAtual.nome}\n\n`
 
 condAtual.itens.forEach(i=>{
 txt+=i.codigo+"\n"
 })
 
-txt+=`\n\nAssinatura: _____________________`
+txt+=`\n\nAssinatura: _______________________`
 
 imprimir(txt)
 }
 
+// IMPRESSÃO FINAL
 function imprimirFinal(){
+if(!condAtual)return
+
 let txt=`FINAL\n\nCliente: ${clienteAtual.nome}\n\n`
 
 condAtual.itens
@@ -196,9 +266,12 @@ txt+=i.codigo+"\n"
 imprimir(txt)
 }
 
+// FUNÇÃO IMPRESSÃO (Epson funciona via navegador)
 function imprimir(t){
-let w=window.open()
+let w=window.open("","PRINT")
 w.document.write("<pre>"+t+"</pre>")
+w.document.close()
+w.focus()
 w.print()
 }
 
