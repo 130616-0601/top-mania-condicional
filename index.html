@@ -6,37 +6,95 @@
 
 <style>
 body{margin:0;font-family:Arial;background:#0b0b0b;color:#fff}
-header{padding:15px;font-size:24px;color:#ff2a2a;border-bottom:2px solid #ff2a2a}
 
+header{
+padding:15px;
+font-size:28px;
+color:#ff2a2a;
+text-align:center;
+border-bottom:2px solid #ff2a2a
+}
+
+/* TELA INICIAL */
+#inicio{
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+height:100vh;
+text-align:center;
+}
+
+#inicio h1{
+font-size:40px;
+color:#ff2a2a;
+}
+
+#inicio img{
+width:300px;
+opacity:0.2;
+margin:20px 0;
+}
+
+#inicio button{
+padding:15px;
+background:#ff2a2a;
+color:#fff;
+border:none;
+cursor:pointer;
+}
+
+/* SISTEMA */
 .container{display:flex;height:calc(100vh - 60px)}
 
 .left{width:320px;border-right:2px solid #ff2a2a;padding:10px}
 .right{flex:1;padding:15px}
 
-input{width:100%;padding:10px;margin-bottom:10px;background:#111;border:1px solid #ff2a2a;color:#fff}
-button{padding:6px;margin:3px;cursor:pointer}
+input{
+width:100%;
+padding:10px;
+margin-bottom:10px;
+background:#111;
+border:1px solid #ff2a2a;
+color:#fff
+}
+
+button{padding:8px;margin:3px;cursor:pointer}
 
 .modo{border:1px solid #ff2a2a;padding:5px;cursor:pointer}
 .ativo{background:#ff2a2a}
 
-.cod{border:1px solid #ff2a2a;padding:6px;margin:4px 0;display:flex;justify-content:space-between}
-
-.copy{background:#ff2a2a;font-size:10px;padding:3px;cursor:pointer}
-
-.devolvido{color:#00c853;text-decoration:line-through}
-
+/* PASTAS */
 .pasta{
-border:1px solid #ff2a2a;
-padding:5px;
+padding:6px;
 margin:5px 0;
 cursor:pointer;
 }
 
-.btn-small{
+.aberto{background:#ff2a2a}
+.finalizado{background:#00c853}
+
+.cod{
+border:1px solid #ff2a2a;
+padding:6px;
+margin:4px 0;
+display:flex;
+justify-content:space-between;
+}
+
+.copy{
+background:#ff2a2a;
 font-size:10px;
 padding:3px;
-background:#ff2a2a;
+cursor:pointer
 }
+
+.devolvido{
+color:#00c853;
+text-decoration:line-through
+}
+
+#app{display:none}
 </style>
 </head>
 
@@ -44,7 +102,15 @@ background:#ff2a2a;
 
 <header>CONTROLE DE CONDICIONAL</header>
 
-<div class="container">
+<!-- INICIO -->
+<div id="inicio">
+<h1>CONTROLE DE CONDICIONAL</h1>
+<img src="logo.png">
+<button onclick="abrirSistema()">ENTRAR</button>
+</div>
+
+<!-- SISTEMA -->
+<div id="app" class="container">
 
 <div class="left">
 
@@ -67,6 +133,7 @@ background:#ff2a2a;
 
 <button onclick="novoCond()">Novo Condicional</button>
 <button onclick="finalizar()">Finalizar</button>
+<button onclick="fechar()">Fechar</button>
 
 <hr>
 
@@ -96,6 +163,22 @@ let clienteAtual=null
 let condAtual=null
 let modo="add"
 
+// ABRIR
+function abrirSistema(){
+inicio.style.display="none"
+app.style.display="flex"
+renderClientes()
+}
+
+// FECHAR
+function fechar(){
+clienteAtual=null
+condAtual=null
+app.style.display="none"
+inicio.style.display="flex"
+}
+
+// SALVAR
 function salvar(){
 localStorage.setItem("clientes",JSON.stringify(clientes))
 }
@@ -109,46 +192,19 @@ let t=telefone.value
 if(!n||!c)return alert("Preencha")
 
 clientes.push({nome:n,cpf:c,telefone:t,conds:[]})
-salvar()
-renderClientes()
-}
-
-function editarCliente(i){
-let c=clientes[i]
-
-let n=prompt("Nome",c.nome)
-let cpfN=prompt("CPF",c.cpf)
-let t=prompt("Telefone",c.telefone)
-
-clientes[i]={...c,nome:n,cpf:cpfN,telefone:t}
 
 salvar()
 renderClientes()
 }
 
-function excluirCliente(i){
-if(confirm("Excluir cliente?")){
-clientes.splice(i,1)
-salvar()
-renderClientes()
-}
-}
-
+// LISTA
 function renderClientes(){
 listaClientes.innerHTML=""
 
 clientes.forEach((c,i)=>{
 let d=document.createElement("div")
 
-d.innerHTML=`
-<b>${c.nome}</b><br>
-CPF:${c.cpf}<br>
-Tel:${c.telefone}<br>
-<button class="btn-small" onclick="editarCliente(${i})">Editar</button>
-<button class="btn-small" onclick="excluirCliente(${i})">Excluir</button>
-<hr>
-`
-
+d.innerHTML=`${c.nome}<br>CPF:${c.cpf}<br>Tel:${c.telefone}<hr>`
 d.onclick=()=>abrirCliente(i)
 
 listaClientes.appendChild(d)
@@ -158,7 +214,8 @@ listaClientes.appendChild(d)
 // ABRIR CLIENTE
 function abrirCliente(i){
 clienteAtual=clientes[i]
-clienteNome.innerText=`${clienteAtual.nome} | CPF:${clienteAtual.cpf}`
+clienteNome.innerText=
+`${clienteAtual.nome} | CPF:${clienteAtual.cpf}`
 
 renderHistorico()
 }
@@ -178,13 +235,14 @@ renderHistorico()
 render()
 }
 
-// HISTÓRICO (PASTAS)
+// HISTÓRICO (CORES)
 function renderHistorico(){
 historico.innerHTML=""
 
 clienteAtual.conds.forEach(c=>{
 let d=document.createElement("div")
-d.className="pasta"
+
+d.className="pasta "+(c.final?"finalizado":"aberto")
 d.innerText=c.data
 
 d.onclick=()=>{
@@ -207,8 +265,6 @@ if(e.key==="Enter"){
 let cod=scan.value
 scan.value=""
 
-if(!condAtual)return alert("Crie condicional")
-
 if(modo==="add"){
 condAtual.itens.push({codigo:cod,status:"pendente"})
 }else{
@@ -221,7 +277,7 @@ render()
 }
 })
 
-// RENDER ITENS
+// RENDER
 function render(){
 lista.innerHTML=""
 
@@ -251,36 +307,22 @@ total.innerText="Pendentes: "+pendentes
 function finalizar(){
 condAtual.final=true
 salvar()
+renderHistorico()
 alert("Finalizado")
-}
-
-// BUSCAR
-function buscarCliente(){
-let cpfBusca=buscarCpf.value
-let i=clientes.findIndex(x=>x.cpf===cpfBusca)
-
-if(i===-1)return alert("Não encontrado")
-
-abrirCliente(i)
 }
 
 // IMPRESSÃO
 function imprimirEntrega(){
 let txt=`CONDICIONAL\n\nCliente: ${clienteAtual.nome}\n\n`
-
 condAtual.itens.forEach(i=>txt+=i.codigo+"\n")
-
 txt+=`\n\nAss: ____________________`
-
 imprimir(txt)
 }
 
 function imprimirFinal(){
 let txt=`FINAL\n\nCliente: ${clienteAtual.nome}\n\n`
-
 condAtual.itens.filter(i=>i.status==="pendente")
 .forEach(i=>txt+=i.codigo+"\n")
-
 imprimir(txt)
 }
 
@@ -289,8 +331,6 @@ let w=window.open()
 w.document.write("<pre>"+t+"</pre>")
 w.print()
 }
-
-renderClientes()
 
 </script>
 
