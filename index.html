@@ -84,8 +84,9 @@ button{padding:6px;margin:3px;cursor:pointer}
 
 <input id="scan" placeholder="Bipar código + ENTER">
 
-<button onclick="imprimirEntrega()">Imprimir Entrega</button>
-<button onclick="imprimirFinal()">Imprimir Final</button>
+<!-- 🔥 BOTÕES DE IMPRESSÃO (AGORA VISÍVEL) -->
+<button onclick="imprimirEntrega()">🧾 Imprimir Entrega</button>
+<button onclick="imprimirFinal()">📄 Imprimir Final</button>
 
 <h3 id="total"></h3>
 <div id="lista"></div>
@@ -132,7 +133,7 @@ salvar()
 renderClientes()
 }
 
-// 🔎 BUSCAR CPF
+// BUSCAR CPF
 function buscarCliente(){
 let cpfBusca = document.getElementById("buscarCpf").value.trim()
 
@@ -147,7 +148,7 @@ let index = clientes.indexOf(cliente)
 abrirCliente(index)
 }
 
-// ✏️ EDITAR
+// EDITAR
 function editarCliente(i){
 let c = clientes[i]
 
@@ -165,7 +166,7 @@ salvar()
 renderClientes()
 }
 
-// ❌ EXCLUIR
+// EXCLUIR
 function excluirCliente(i){
 if(confirm("Excluir cliente?")){
 clientes.splice(i,1)
@@ -174,7 +175,7 @@ renderClientes()
 }
 }
 
-// LISTA CLIENTES
+// LISTA
 function renderClientes(){
 listaClientes.innerHTML=""
 
@@ -199,14 +200,12 @@ listaClientes.appendChild(d)
 })
 }
 
-// ABRIR CLIENTE
 function abrirCliente(i){
 clienteAtual=clientes[i]
 clienteNome.innerText=`${clienteAtual.nome} | CPF:${clienteAtual.cpf}`
 renderHistorico()
 }
 
-// NOVO COND
 function novoCond(){
 let data=new Date().toLocaleDateString()
 let novo={data,itens:[],final:false}
@@ -217,7 +216,6 @@ renderHistorico()
 render()
 }
 
-// EXCLUIR COND
 function excluirCond(i){
 if(confirm("Excluir condicional?")){
 clienteAtual.conds.splice(i,1)
@@ -227,10 +225,8 @@ render()
 }
 }
 
-// HISTÓRICO
 function renderHistorico(){
 historico.innerHTML=""
-
 clienteAtual.conds.forEach((c,i)=>{
 let d=document.createElement("div")
 d.className="pasta "+(c.final?"finalizado":"aberto")
@@ -245,11 +241,9 @@ historico.appendChild(d)
 })
 }
 
-// MODOS
 addBtn.onclick=()=>{modo="add";addBtn.classList.add("ativo");retBtn.classList.remove("ativo")}
 retBtn.onclick=()=>{modo="ret";retBtn.classList.add("ativo");addBtn.classList.remove("ativo")}
 
-// LEITOR
 scan.addEventListener("keydown",e=>{
 if(e.key==="Enter"){
 let cod=scan.value
@@ -267,7 +261,6 @@ render()
 }
 })
 
-// RENDER
 function render(){
 lista.innerHTML=""
 if(!condAtual)return
@@ -288,7 +281,6 @@ let pendentes=condAtual.itens.filter(x=>x.status==="pendente").length
 total.innerText="Pendentes: "+pendentes
 }
 
-// FINALIZAR
 function finalizar(){
 condAtual.final=true
 salvar()
@@ -326,10 +318,23 @@ txt+=i.codigo+"\n"
 imprimir(txt)
 }
 
-// 🖨️ IMPRESSÃO BASE
+// 🖨️ BASE IMPRESSÃO
 function imprimir(t){
 let w=window.open("", "PRINT")
-w.document.write("<pre style='font-size:16px'>"+t+"</pre>")
+
+w.document.write(`
+<html>
+<head>
+<style>
+body{font-family:monospace;font-size:14px;width:220px}
+</style>
+</head>
+<body>
+<pre>${t}</pre>
+</body>
+</html>
+`)
+
 w.document.close()
 w.focus()
 w.print()
