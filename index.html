@@ -15,57 +15,33 @@ text-align:center;
 border-bottom:2px solid #ff2a2a
 }
 
-/* TELA INICIAL */
 #inicio{
 display:flex;
 flex-direction:column;
 justify-content:center;
 align-items:center;
 height:100vh;
-text-align:center;
 }
 
-#inicio h1{
-font-size:40px;
-color:#ff2a2a;
-}
+#inicio h1{color:#ff2a2a;font-size:40px}
+#inicio img{width:300px;opacity:0.2;margin:20px}
+#inicio button{padding:15px;background:#ff2a2a;color:#fff;border:none;cursor:pointer}
 
-#inicio img{
-width:300px;
-opacity:0.2;
-margin:20px 0;
-}
-
-#inicio button{
-padding:15px;
-background:#ff2a2a;
-color:#fff;
-border:none;
-cursor:pointer;
-}
-
-/* SISTEMA */
 .container{display:flex;height:calc(100vh - 60px)}
 
 .left{width:320px;border-right:2px solid #ff2a2a;padding:10px}
 .right{flex:1;padding:15px}
 
-input{
-width:100%;
-padding:10px;
-margin-bottom:10px;
-background:#111;
-border:1px solid #ff2a2a;
-color:#fff
-}
-
-button{padding:8px;margin:3px;cursor:pointer}
+input{width:100%;padding:10px;margin-bottom:10px;background:#111;border:1px solid #ff2a2a;color:#fff}
+button{padding:6px;margin:3px;cursor:pointer}
 
 .modo{border:1px solid #ff2a2a;padding:5px;cursor:pointer}
 .ativo{background:#ff2a2a}
 
 /* PASTAS */
 .pasta{
+display:flex;
+justify-content:space-between;
 padding:6px;
 margin:5px 0;
 cursor:pointer;
@@ -82,17 +58,8 @@ display:flex;
 justify-content:space-between;
 }
 
-.copy{
-background:#ff2a2a;
-font-size:10px;
-padding:3px;
-cursor:pointer
-}
-
-.devolvido{
-color:#00c853;
-text-decoration:line-through
-}
+.copy{background:#ff2a2a;font-size:10px;padding:3px;cursor:pointer}
+.devolvido{color:#00c853;text-decoration:line-through}
 
 #app{display:none}
 </style>
@@ -102,14 +69,12 @@ text-decoration:line-through
 
 <header>CONTROLE DE CONDICIONAL</header>
 
-<!-- INICIO -->
 <div id="inicio">
 <h1>CONTROLE DE CONDICIONAL</h1>
 <img src="logo.png">
 <button onclick="abrirSistema()">ENTRAR</button>
 </div>
 
-<!-- SISTEMA -->
 <div id="app" class="container">
 
 <div class="left">
@@ -119,9 +84,6 @@ text-decoration:line-through
 <input id="telefone" placeholder="Telefone">
 
 <button onclick="criarCliente()">Criar Cliente</button>
-
-<input id="buscarCpf" placeholder="Buscar CPF">
-<button onclick="buscarCliente()">Buscar</button>
 
 <div id="listaClientes"></div>
 
@@ -145,9 +107,6 @@ text-decoration:line-through
 <span id="retBtn" class="modo">RETIRAR</span>
 
 <input id="scan" placeholder="Bipar código + ENTER">
-
-<button onclick="imprimirEntrega()">Imprimir Entrega</button>
-<button onclick="imprimirFinal()">Imprimir Final</button>
 
 <h3 id="total"></h3>
 <div id="lista"></div>
@@ -185,13 +144,12 @@ localStorage.setItem("clientes",JSON.stringify(clientes))
 
 // CLIENTE
 function criarCliente(){
-let n=nome.value
-let c=cpf.value
-let t=telefone.value
-
-if(!n||!c)return alert("Preencha")
-
-clientes.push({nome:n,cpf:c,telefone:t,conds:[]})
+clientes.push({
+nome:nome.value,
+cpf:cpf.value,
+telefone:telefone.value,
+conds:[]
+})
 
 salvar()
 renderClientes()
@@ -214,9 +172,7 @@ listaClientes.appendChild(d)
 // ABRIR CLIENTE
 function abrirCliente(i){
 clienteAtual=clientes[i]
-clienteNome.innerText=
-`${clienteAtual.nome} | CPF:${clienteAtual.cpf}`
-
+clienteNome.innerText=`${clienteAtual.nome} | CPF:${clienteAtual.cpf}`
 renderHistorico()
 }
 
@@ -224,10 +180,9 @@ renderHistorico()
 function novoCond(){
 let data=new Date().toLocaleDateString()
 
-let novo={data:data,itens:[],final:false}
+let novo={data,itens:[],final:false}
 
 clienteAtual.conds.push(novo)
-
 condAtual=novo
 
 salvar()
@@ -235,15 +190,29 @@ renderHistorico()
 render()
 }
 
-// HISTÓRICO (CORES)
+// EXCLUIR COND
+function excluirCond(index){
+if(confirm("Excluir condicional?")){
+clienteAtual.conds.splice(index,1)
+salvar()
+renderHistorico()
+render()
+}
+}
+
+// HISTÓRICO
 function renderHistorico(){
 historico.innerHTML=""
 
-clienteAtual.conds.forEach(c=>{
+clienteAtual.conds.forEach((c,i)=>{
 let d=document.createElement("div")
 
 d.className="pasta "+(c.final?"finalizado":"aberto")
-d.innerText=c.data
+
+d.innerHTML=`
+<span>${c.data}</span>
+<button onclick="excluirCond(${i})">X</button>
+`
 
 d.onclick=()=>{
 condAtual=c
@@ -311,26 +280,7 @@ renderHistorico()
 alert("Finalizado")
 }
 
-// IMPRESSÃO
-function imprimirEntrega(){
-let txt=`CONDICIONAL\n\nCliente: ${clienteAtual.nome}\n\n`
-condAtual.itens.forEach(i=>txt+=i.codigo+"\n")
-txt+=`\n\nAss: ____________________`
-imprimir(txt)
-}
-
-function imprimirFinal(){
-let txt=`FINAL\n\nCliente: ${clienteAtual.nome}\n\n`
-condAtual.itens.filter(i=>i.status==="pendente")
-.forEach(i=>txt+=i.codigo+"\n")
-imprimir(txt)
-}
-
-function imprimir(t){
-let w=window.open()
-w.document.write("<pre>"+t+"</pre>")
-w.print()
-}
+renderClientes()
 
 </script>
 
