@@ -38,25 +38,11 @@ button{padding:6px;margin:3px;cursor:pointer}
 .modo{border:1px solid #ff2a2a;padding:5px;cursor:pointer}
 .ativo{background:#ff2a2a}
 
-/* PASTAS */
-.pasta{
-display:flex;
-justify-content:space-between;
-padding:6px;
-margin:5px 0;
-cursor:pointer;
-}
-
+.pasta{display:flex;justify-content:space-between;padding:6px;margin:5px 0;cursor:pointer;}
 .aberto{background:#ff2a2a}
 .finalizado{background:#00c853}
 
-.cod{
-border:1px solid #ff2a2a;
-padding:6px;
-margin:4px 0;
-display:flex;
-justify-content:space-between;
-}
+.cod{border:1px solid #ff2a2a;padding:6px;margin:4px 0;display:flex;justify-content:space-between}
 
 .copy{background:#ff2a2a;font-size:10px;padding:3px;cursor:pointer}
 .devolvido{color:#00c853;text-decoration:line-through}
@@ -84,6 +70,9 @@ justify-content:space-between;
 <input id="telefone" placeholder="Telefone">
 
 <button onclick="criarCliente()">Criar Cliente</button>
+
+<input id="buscarCpf" placeholder="Buscar CPF">
+<button onclick="buscarCliente()">Buscar Cliente</button>
 
 <div id="listaClientes"></div>
 
@@ -122,14 +111,12 @@ let clienteAtual=null
 let condAtual=null
 let modo="add"
 
-// ABRIR
 function abrirSistema(){
 inicio.style.display="none"
 app.style.display="flex"
 renderClientes()
 }
 
-// FECHAR
 function fechar(){
 clienteAtual=null
 condAtual=null
@@ -137,13 +124,13 @@ app.style.display="none"
 inicio.style.display="flex"
 }
 
-// SALVAR
 function salvar(){
 localStorage.setItem("clientes",JSON.stringify(clientes))
 }
 
-// CLIENTE
 function criarCliente(){
+if(!nome.value||!cpf.value)return alert("Preencha")
+
 clientes.push({
 nome:nome.value,
 cpf:cpf.value,
@@ -155,28 +142,72 @@ salvar()
 renderClientes()
 }
 
-// LISTA
+function buscarCliente(){
+let cpfBusca = document.getElementById("buscarCpf").value.trim()
+
+let i = clientes.findIndex(x => x.cpf === cpfBusca)
+
+if(i === -1){
+alert("Cliente não encontrado")
+return
+}
+
+abrirCliente(i)
+}
+
+function editarCliente(i){
+let c=clientes[i]
+
+let novoNome=prompt("Nome:",c.nome)
+let novoCpf=prompt("CPF:",c.cpf)
+let novoTel=prompt("Telefone:",c.telefone)
+
+if(!novoNome||!novoCpf)return
+
+clientes[i].nome=novoNome
+clientes[i].cpf=novoCpf
+clientes[i].telefone=novoTel
+
+salvar()
+renderClientes()
+}
+
+function excluirCliente(i){
+if(confirm("Excluir cliente?")){
+clientes.splice(i,1)
+salvar()
+renderClientes()
+}
+}
+
 function renderClientes(){
 listaClientes.innerHTML=""
 
 clientes.forEach((c,i)=>{
 let d=document.createElement("div")
 
-d.innerHTML=`${c.nome}<br>CPF:${c.cpf}<br>Tel:${c.telefone}<hr>`
+d.innerHTML=`
+<b>${c.nome}</b><br>
+CPF:${c.cpf}<br>
+Tel:${c.telefone}<br>
+
+<button onclick="event.stopPropagation(); editarCliente(${i})">Editar</button>
+<button onclick="event.stopPropagation(); excluirCliente(${i})">Excluir</button>
+<hr>
+`
+
 d.onclick=()=>abrirCliente(i)
 
 listaClientes.appendChild(d)
 })
 }
 
-// ABRIR CLIENTE
 function abrirCliente(i){
 clienteAtual=clientes[i]
 clienteNome.innerText=`${clienteAtual.nome} | CPF:${clienteAtual.cpf}`
 renderHistorico()
 }
 
-// NOVO COND
 function novoCond(){
 let data=new Date().toLocaleDateString()
 
@@ -190,7 +221,6 @@ renderHistorico()
 render()
 }
 
-// EXCLUIR COND
 function excluirCond(index){
 if(confirm("Excluir condicional?")){
 clienteAtual.conds.splice(index,1)
@@ -200,7 +230,6 @@ render()
 }
 }
 
-// HISTÓRICO
 function renderHistorico(){
 historico.innerHTML=""
 
@@ -211,7 +240,7 @@ d.className="pasta "+(c.final?"finalizado":"aberto")
 
 d.innerHTML=`
 <span>${c.data}</span>
-<button onclick="excluirCond(${i})">X</button>
+<button onclick="event.stopPropagation(); excluirCond(${i})">X</button>
 `
 
 d.onclick=()=>{
@@ -223,11 +252,9 @@ historico.appendChild(d)
 })
 }
 
-// MODOS
 addBtn.onclick=()=>{modo="add";addBtn.classList.add("ativo");retBtn.classList.remove("ativo")}
 retBtn.onclick=()=>{modo="ret";retBtn.classList.add("ativo");addBtn.classList.remove("ativo")}
 
-// LEITOR
 scan.addEventListener("keydown",e=>{
 if(e.key==="Enter"){
 
@@ -246,7 +273,6 @@ render()
 }
 })
 
-// RENDER
 function render(){
 lista.innerHTML=""
 
@@ -272,7 +298,6 @@ let pendentes=condAtual.itens.filter(x=>x.status==="pendente").length
 total.innerText="Pendentes: "+pendentes
 }
 
-// FINALIZAR
 function finalizar(){
 condAtual.final=true
 salvar()
