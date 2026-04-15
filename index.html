@@ -6,46 +6,40 @@
 
 <style>
 body{margin:0;font-family:Arial;background:#0b0b0b;color:#fff}
+header{padding:15px;font-size:28px;color:#ff2a2a;text-align:center;border-bottom:2px solid #ff2a2a}
 
-header{
-padding:15px;
-font-size:28px;
-color:#ff2a2a;
-text-align:center;
-border-bottom:2px solid #ff2a2a
-}
-
-#inicio{
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-height:100vh;
-}
-
+#inicio{display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh}
 #inicio h1{color:#ff2a2a;font-size:40px}
 #inicio img{width:300px;opacity:0.2;margin:20px}
 #inicio button{padding:15px;background:#ff2a2a;color:#fff;border:none;cursor:pointer}
 
 .container{display:flex;height:calc(100vh - 60px)}
-
 .left{width:320px;border-right:2px solid #ff2a2a;padding:10px}
 .right{flex:1;padding:15px}
 
 input{width:100%;padding:10px;margin-bottom:10px;background:#111;border:1px solid #ff2a2a;color:#fff}
 button{padding:6px;margin:3px;cursor:pointer}
 
-.modo{border:1px solid #ff2a2a;padding:5px;cursor:pointer}
-.ativo{background:#ff2a2a}
+.cliente{
+border:1px solid #ff2a2a;
+padding:6px;
+margin-bottom:5px;
+}
 
-.pasta{display:flex;justify-content:space-between;padding:6px;margin:5px 0;cursor:pointer;}
+.acoes button{
+font-size:10px;
+}
+
+.pasta{display:flex;justify-content:space-between;padding:6px;margin:5px 0;cursor:pointer}
 .aberto{background:#ff2a2a}
 .finalizado{background:#00c853}
 
 .cod{border:1px solid #ff2a2a;padding:6px;margin:4px 0;display:flex;justify-content:space-between}
-
 .copy{background:#ff2a2a;font-size:10px;padding:3px;cursor:pointer}
 .devolvido{color:#00c853;text-decoration:line-through}
+
+.modo{border:1px solid #ff2a2a;padding:5px;cursor:pointer}
+.ativo{background:#ff2a2a}
 
 #app{display:none}
 </style>
@@ -111,6 +105,10 @@ let clienteAtual=null
 let condAtual=null
 let modo="add"
 
+function salvar(){
+localStorage.setItem("clientes",JSON.stringify(clientes))
+}
+
 function abrirSistema(){
 inicio.style.display="none"
 app.style.display="flex"
@@ -124,12 +122,9 @@ app.style.display="none"
 inicio.style.display="flex"
 }
 
-function salvar(){
-localStorage.setItem("clientes",JSON.stringify(clientes))
-}
-
+// 🔴 CRIAR CLIENTE
 function criarCliente(){
-if(!nome.value||!cpf.value)return alert("Preencha")
+if(!nome.value || !cpf.value) return alert("Preencha")
 
 clientes.push({
 nome:nome.value,
@@ -142,36 +137,40 @@ salvar()
 renderClientes()
 }
 
+// 🔎 BUSCAR CPF (CORRIGIDO)
 function buscarCliente(){
 let cpfBusca = document.getElementById("buscarCpf").value.trim()
 
-let i = clientes.findIndex(x => x.cpf === cpfBusca)
+let cliente = clientes.find(c => c.cpf == cpfBusca)
 
-if(i === -1){
+if(!cliente){
 alert("Cliente não encontrado")
 return
 }
 
-abrirCliente(i)
+let index = clientes.indexOf(cliente)
+abrirCliente(index)
 }
 
+// ✏️ EDITAR
 function editarCliente(i){
-let c=clientes[i]
+let c = clientes[i]
 
-let novoNome=prompt("Nome:",c.nome)
-let novoCpf=prompt("CPF:",c.cpf)
-let novoTel=prompt("Telefone:",c.telefone)
+let n = prompt("Nome:", c.nome)
+let cpfN = prompt("CPF:", c.cpf)
+let t = prompt("Telefone:", c.telefone)
 
-if(!novoNome||!novoCpf)return
+if(!n || !cpfN) return
 
-clientes[i].nome=novoNome
-clientes[i].cpf=novoCpf
-clientes[i].telefone=novoTel
+clientes[i].nome = n
+clientes[i].cpf = cpfN
+clientes[i].telefone = t
 
 salvar()
 renderClientes()
 }
 
+// ❌ EXCLUIR
 function excluirCliente(i){
 if(confirm("Excluir cliente?")){
 clientes.splice(i,1)
@@ -180,27 +179,32 @@ renderClientes()
 }
 }
 
+// 🧠 LISTA (SEM CONFLITO)
 function renderClientes(){
 listaClientes.innerHTML=""
 
 clientes.forEach((c,i)=>{
 let d=document.createElement("div")
+d.className="cliente"
 
 d.innerHTML=`
+<div onclick="abrirCliente(${i})">
 <b>${c.nome}</b><br>
 CPF:${c.cpf}<br>
-Tel:${c.telefone}<br>
+Tel:${c.telefone}
+</div>
 
-<button onclick="event.stopPropagation(); editarCliente(${i})">Editar</button>
-<button onclick="event.stopPropagation(); excluirCliente(${i})">Excluir</button>
-<hr>
+<div class="acoes">
+<button onclick="editarCliente(${i})">Editar</button>
+<button onclick="excluirCliente(${i})">Excluir</button>
+</div>
 `
-
-d.onclick=()=>abrirCliente(i)
 
 listaClientes.appendChild(d)
 })
 }
+
+// RESTANTE DO SISTEMA (inalterado)
 
 function abrirCliente(i){
 clienteAtual=clientes[i]
@@ -210,20 +214,17 @@ renderHistorico()
 
 function novoCond(){
 let data=new Date().toLocaleDateString()
-
 let novo={data,itens:[],final:false}
-
 clienteAtual.conds.push(novo)
 condAtual=novo
-
 salvar()
 renderHistorico()
 render()
 }
 
-function excluirCond(index){
+function excluirCond(i){
 if(confirm("Excluir condicional?")){
-clienteAtual.conds.splice(index,1)
+clienteAtual.conds.splice(i,1)
 salvar()
 renderHistorico()
 render()
@@ -232,22 +233,16 @@ render()
 
 function renderHistorico(){
 historico.innerHTML=""
-
 clienteAtual.conds.forEach((c,i)=>{
 let d=document.createElement("div")
-
 d.className="pasta "+(c.final?"finalizado":"aberto")
 
 d.innerHTML=`
 <span>${c.data}</span>
-<button onclick="event.stopPropagation(); excluirCond(${i})">X</button>
+<button onclick="excluirCond(${i})">X</button>
 `
 
-d.onclick=()=>{
-condAtual=c
-render()
-}
-
+d.onclick=()=>{condAtual=c;render()}
 historico.appendChild(d)
 })
 }
@@ -257,17 +252,14 @@ retBtn.onclick=()=>{modo="ret";retBtn.classList.add("ativo");addBtn.classList.re
 
 scan.addEventListener("keydown",e=>{
 if(e.key==="Enter"){
-
 let cod=scan.value
 scan.value=""
-
 if(modo==="add"){
 condAtual.itens.push({codigo:cod,status:"pendente"})
 }else{
 let item=condAtual.itens.find(x=>x.codigo===cod && x.status==="pendente")
 if(item)item.status="devolvido"
 }
-
 salvar()
 render()
 }
@@ -275,22 +267,15 @@ render()
 
 function render(){
 lista.innerHTML=""
-
 if(!condAtual)return
 
 condAtual.itens.forEach(i=>{
 let d=document.createElement("div")
 d.className="cod"
-
 d.innerHTML=`
-<span class="${i.status==="devolvido"?"devolvido":""}">
-${i.codigo}
-</span>
-<span class="copy" onclick="navigator.clipboard.writeText('${i.codigo}')">
-copiar
-</span>
+<span class="${i.status==="devolvido"?"devolvido":""}">${i.codigo}</span>
+<span class="copy" onclick="navigator.clipboard.writeText('${i.codigo}')">copiar</span>
 `
-
 lista.appendChild(d)
 })
 
