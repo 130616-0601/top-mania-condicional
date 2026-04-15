@@ -20,15 +20,8 @@ header{padding:15px;font-size:28px;color:#ff2a2a;text-align:center;border-bottom
 input{width:100%;padding:10px;margin-bottom:10px;background:#111;border:1px solid #ff2a2a;color:#fff}
 button{padding:6px;margin:3px;cursor:pointer}
 
-.cliente{
-border:1px solid #ff2a2a;
-padding:6px;
-margin-bottom:5px;
-}
-
-.acoes button{
-font-size:10px;
-}
+.cliente{border:1px solid #ff2a2a;padding:6px;margin-bottom:5px}
+.acoes button{font-size:10px}
 
 .pasta{display:flex;justify-content:space-between;padding:6px;margin:5px 0;cursor:pointer}
 .aberto{background:#ff2a2a}
@@ -91,6 +84,9 @@ font-size:10px;
 
 <input id="scan" placeholder="Bipar código + ENTER">
 
+<button onclick="imprimirEntrega()">Imprimir Entrega</button>
+<button onclick="imprimirFinal()">Imprimir Final</button>
+
 <h3 id="total"></h3>
 <div id="lista"></div>
 
@@ -122,7 +118,6 @@ app.style.display="none"
 inicio.style.display="flex"
 }
 
-// 🔴 CRIAR CLIENTE
 function criarCliente(){
 if(!nome.value || !cpf.value) return alert("Preencha")
 
@@ -137,7 +132,7 @@ salvar()
 renderClientes()
 }
 
-// 🔎 BUSCAR CPF (CORRIGIDO)
+// 🔎 BUSCAR CPF
 function buscarCliente(){
 let cpfBusca = document.getElementById("buscarCpf").value.trim()
 
@@ -179,7 +174,7 @@ renderClientes()
 }
 }
 
-// 🧠 LISTA (SEM CONFLITO)
+// LISTA CLIENTES
 function renderClientes(){
 listaClientes.innerHTML=""
 
@@ -204,14 +199,14 @@ listaClientes.appendChild(d)
 })
 }
 
-// RESTANTE DO SISTEMA (inalterado)
-
+// ABRIR CLIENTE
 function abrirCliente(i){
 clienteAtual=clientes[i]
 clienteNome.innerText=`${clienteAtual.nome} | CPF:${clienteAtual.cpf}`
 renderHistorico()
 }
 
+// NOVO COND
 function novoCond(){
 let data=new Date().toLocaleDateString()
 let novo={data,itens:[],final:false}
@@ -222,6 +217,7 @@ renderHistorico()
 render()
 }
 
+// EXCLUIR COND
 function excluirCond(i){
 if(confirm("Excluir condicional?")){
 clienteAtual.conds.splice(i,1)
@@ -231,8 +227,10 @@ render()
 }
 }
 
+// HISTÓRICO
 function renderHistorico(){
 historico.innerHTML=""
+
 clienteAtual.conds.forEach((c,i)=>{
 let d=document.createElement("div")
 d.className="pasta "+(c.final?"finalizado":"aberto")
@@ -247,24 +245,29 @@ historico.appendChild(d)
 })
 }
 
+// MODOS
 addBtn.onclick=()=>{modo="add";addBtn.classList.add("ativo");retBtn.classList.remove("ativo")}
 retBtn.onclick=()=>{modo="ret";retBtn.classList.add("ativo");addBtn.classList.remove("ativo")}
 
+// LEITOR
 scan.addEventListener("keydown",e=>{
 if(e.key==="Enter"){
 let cod=scan.value
 scan.value=""
+
 if(modo==="add"){
 condAtual.itens.push({codigo:cod,status:"pendente"})
 }else{
 let item=condAtual.itens.find(x=>x.codigo===cod && x.status==="pendente")
 if(item)item.status="devolvido"
 }
+
 salvar()
 render()
 }
 })
 
+// RENDER
 function render(){
 lista.innerHTML=""
 if(!condAtual)return
@@ -272,10 +275,12 @@ if(!condAtual)return
 condAtual.itens.forEach(i=>{
 let d=document.createElement("div")
 d.className="cod"
+
 d.innerHTML=`
 <span class="${i.status==="devolvido"?"devolvido":""}">${i.codigo}</span>
 <span class="copy" onclick="navigator.clipboard.writeText('${i.codigo}')">copiar</span>
 `
+
 lista.appendChild(d)
 })
 
@@ -283,11 +288,51 @@ let pendentes=condAtual.itens.filter(x=>x.status==="pendente").length
 total.innerText="Pendentes: "+pendentes
 }
 
+// FINALIZAR
 function finalizar(){
 condAtual.final=true
 salvar()
 renderHistorico()
 alert("Finalizado")
+}
+
+// 🧾 IMPRESSÃO ENTREGA
+function imprimirEntrega(){
+if(!condAtual)return
+
+let txt="CONDICIONAL\n\nCliente: "+clienteAtual.nome+"\n\n"
+
+condAtual.itens.forEach(i=>{
+txt+=i.codigo+"\n"
+})
+
+txt+="\n\nAssinatura: _____________________"
+
+imprimir(txt)
+}
+
+// 🧾 IMPRESSÃO FINAL
+function imprimirFinal(){
+if(!condAtual)return
+
+let txt="FINAL\n\nCliente: "+clienteAtual.nome+"\n\n"
+
+condAtual.itens
+.filter(i=>i.status==="pendente")
+.forEach(i=>{
+txt+=i.codigo+"\n"
+})
+
+imprimir(txt)
+}
+
+// 🖨️ IMPRESSÃO BASE
+function imprimir(t){
+let w=window.open("", "PRINT")
+w.document.write("<pre style='font-size:16px'>"+t+"</pre>")
+w.document.close()
+w.focus()
+w.print()
 }
 
 renderClientes()
