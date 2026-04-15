@@ -11,37 +11,20 @@ header{padding:15px;font-size:24px;color:#ff2a2a;border-bottom:2px solid #ff2a2a
 .container{display:flex;height:calc(100vh - 60px)}
 
 .left{width:320px;border-right:2px solid #ff2a2a;padding:10px}
-.right{flex:1;padding:15px;position:relative}
+.right{flex:1;padding:15px}
 
 input{width:100%;padding:10px;margin-bottom:10px;background:#111;border:1px solid #ff2a2a;color:#fff}
 
-button{padding:10px;border:none;cursor:pointer;margin-top:5px}
+button{padding:8px;margin:3px;cursor:pointer}
 
-.btn-red{background:#ff2a2a;color:#fff}
-.btn-green{background:#00c853;color:#fff}
-.btn-gray{background:#333;color:#fff}
-
-.cliente{
-border:1px solid #ff2a2a;
-padding:8px;
-margin:5px 0;
-cursor:pointer;
-position:relative;
-}
-
-.excluir{
-position:absolute;
-right:5px;
-top:5px;
-background:#ff2a2a;
-font-size:10px;
-padding:2px 5px;
-cursor:pointer;
-}
-
-.cod{border:1px solid #ff2a2a;padding:6px;margin:4px 0}
-
+.modo{border:1px solid #ff2a2a;padding:5px;cursor:pointer}
 .ativo{background:#ff2a2a}
+
+.cod{border:1px solid #ff2a2a;padding:6px;margin:4px 0;display:flex;justify-content:space-between}
+
+.copy{background:#ff2a2a;font-size:10px;padding:3px;cursor:pointer}
+
+.devolvido{color:#00c853}
 
 </style>
 </head>
@@ -58,9 +41,7 @@ cursor:pointer;
 <input id="cpf" placeholder="CPF">
 <input id="telefone" placeholder="Telefone">
 
-<button class="btn-red" onclick="criarCliente()">Criar Cliente</button>
-
-<hr>
+<button onclick="criarCliente()">Criar Cliente</button>
 
 <div id="listaClientes"></div>
 
@@ -71,17 +52,21 @@ cursor:pointer;
 <h2 id="clienteNome"></h2>
 
 <button onclick="novoCond()">Novo Condicional</button>
-<button onclick="fechar()">Fechar</button>
+<button onclick="finalizar()">Finalizar</button>
 
 <hr>
 
-<div id="historico"></div>
+<div>
+<span id="addBtn" class="modo ativo">ADICIONAR</span>
+<span id="retBtn" class="modo">RETIRAR</span>
+</div>
 
-<hr>
+<input id="scan" placeholder="Bipar código + ENTER">
 
-<input id="scan" placeholder="Digite código + ENTER">
+<button onclick="imprimirEntrega()">Imprimir Entrega</button>
+<button onclick="imprimirFinal()">Imprimir Final</button>
 
-<h3 id="total">Total: 0</h3>
+<h3 id="total"></h3>
 <div id="lista"></div>
 
 </div>
@@ -90,156 +75,133 @@ cursor:pointer;
 
 <script>
 
-let clientes = JSON.parse(localStorage.getItem("clientes") || "[]")
+let clientes = JSON.parse(localStorage.getItem("clientes")||"[]")
 
-let clienteAtual = null
-let condAtual = null
+let clienteAtual=null
+let condAtual=null
+let modo="add"
 
 function salvar(){
-localStorage.setItem("clientes", JSON.stringify(clientes))
+localStorage.setItem("clientes",JSON.stringify(clientes))
 }
 
-// CRIAR CLIENTE
 function criarCliente(){
-let n = document.getElementById("nome").value
-let c = document.getElementById("cpf").value
-let t = document.getElementById("telefone").value
+let n=nome.value
+let c=cpf.value
+let t=telefone.value
 
-if(!n || !c) return alert("Preencha tudo")
+if(!n||!c)return alert("Preencha")
 
-let novo = {nome:n, cpf:c, telefone:t, conds:[]}
-
-clientes.push(novo)
-
+clientes.push({nome:n,cpf:c,telefone:t,conds:[]})
 salvar()
 renderClientes()
-
 }
 
-// LISTAR CLIENTES
 function renderClientes(){
-let div = document.getElementById("listaClientes")
-div.innerHTML = ""
-
+listaClientes.innerHTML=""
 clientes.forEach((c,i)=>{
+let d=document.createElement("div")
+d.innerHTML=`${c.nome}<br>CPF:${c.cpf}<br>Tel:${c.telefone}`
+d.onclick=()=>abrirCliente(i)
+listaClientes.appendChild(d)
+})
+}
 
-let el = document.createElement("div")
-el.className = "cliente"
+function abrirCliente(i){
+clienteAtual=clientes[i]
+clienteNome.innerText=`${clienteAtual.nome} | CPF:${clienteAtual.cpf} | Tel:${clienteAtual.telefone}`
+}
 
-el.innerHTML = `
-<b>${c.nome}</b><br>
-CPF: ${c.cpf}<br>
-Tel: ${c.telefone}
-<span class="excluir" onclick="excluirCliente(${i})">X</span>
+function novoCond(){
+if(!clienteAtual)return alert("Selecione cliente")
+
+condAtual={data:new Date().toLocaleDateString(),itens:[],final:false}
+clienteAtual.conds.push(condAtual)
+salvar()
+render()
+}
+
+addBtn.onclick=()=>{modo="add";addBtn.classList.add("ativo");retBtn.classList.remove("ativo")}
+retBtn.onclick=()=>{modo="ret";retBtn.classList.add("ativo");addBtn.classList.remove("ativo")}
+
+scan.addEventListener("keydown",e=>{
+if(e.key==="Enter"){
+let cod=scan.value
+scan.value=""
+
+if(!condAtual)return alert("Crie condicional")
+
+if(modo==="add"){
+condAtual.itens.push({codigo:cod,status:"pendente"})
+}else{
+let item=condAtual.itens.find(x=>x.codigo===cod && x.status==="pendente")
+if(item)item.status="devolvido"
+}
+
+salvar()
+render()
+}
+})
+
+function render(){
+lista.innerHTML=""
+
+condAtual.itens.forEach(i=>{
+let d=document.createElement("div")
+d.className="cod"
+
+let status=i.status==="devolvido"?"(devolvido)":""
+
+d.innerHTML=`
+<span class="${i.status==="devolvido"?"devolvido":""}">
+${i.codigo} ${status}
+</span>
+<span class="copy" onclick="navigator.clipboard.writeText('${i.codigo}')">copiar</span>
 `
 
-el.onclick = ()=> abrirCliente(i)
-
-div.appendChild(el)
-
+lista.appendChild(d)
 })
+
+let pendentes=condAtual.itens.filter(x=>x.status==="pendente").length
+total.innerText="Pendentes: "+pendentes
 }
 
-// EXCLUIR CLIENTE
-function excluirCliente(i){
-if(confirm("Excluir cliente?")){
-clientes.splice(i,1)
+function finalizar(){
+condAtual.final=true
 salvar()
-renderClientes()
-}
-}
-
-// ABRIR CLIENTE
-function abrirCliente(i){
-clienteAtual = clientes[i]
-condAtual = null
-
-document.getElementById("clienteNome").innerText =
-clienteAtual.nome + " | CPF: " + clienteAtual.cpf + " | Tel: " + clienteAtual.telefone
-
-renderHistorico()
+alert("Finalizado")
 }
 
-// NOVO CONDICIONAL
-function novoCond(){
-if(!clienteAtual) return alert("Selecione cliente")
+function imprimirEntrega(){
+let txt=`CONDICIONAL\n\nCliente: ${clienteAtual.nome}\n\n`
 
-condAtual = {itens:[], data:new Date().toLocaleDateString()}
-
-clienteAtual.conds.push(condAtual)
-
-salvar()
-renderHistorico()
-render()
-}
-
-// HISTÓRICO
-function renderHistorico(){
-let div = document.getElementById("historico")
-div.innerHTML = ""
-
-if(!clienteAtual) return
-
-clienteAtual.conds.forEach((c,i)=>{
-
-let el = document.createElement("div")
-el.innerText = c.data
-
-el.onclick = ()=>{
-condAtual = c
-render()
-}
-
-div.appendChild(el)
-
-})
-}
-
-// ADICIONAR CÓDIGO
-document.getElementById("scan").addEventListener("keydown", e=>{
-if(e.key==="Enter"){
-
-if(!condAtual) return alert("Crie um condicional primeiro")
-
-let val = e.target.value
-e.target.value=""
-
-condAtual.itens.push(val)
-
-salvar()
-render()
-
-}
+condAtual.itens.forEach(i=>{
+txt+=i.codigo+"\n"
 })
 
-// RENDER LISTA
-function render(){
-let div = document.getElementById("lista")
-div.innerHTML = ""
+txt+=`\n\nAssinatura: _____________________`
 
-if(!condAtual) return
+imprimir(txt)
+}
 
-condAtual.itens.forEach(c=>{
-let el = document.createElement("div")
-el.className="cod"
-el.innerText=c
-div.appendChild(el)
+function imprimirFinal(){
+let txt=`FINAL\n\nCliente: ${clienteAtual.nome}\n\n`
+
+condAtual.itens
+.filter(i=>i.status==="pendente")
+.forEach(i=>{
+txt+=i.codigo+"\n"
 })
 
-document.getElementById("total").innerText =
-"Total: "+condAtual.itens.length
+imprimir(txt)
 }
 
-// FECHAR
-function fechar(){
-clienteAtual = null
-condAtual = null
-document.getElementById("clienteNome").innerText = ""
-document.getElementById("lista").innerHTML = ""
-document.getElementById("historico").innerHTML = ""
+function imprimir(t){
+let w=window.open()
+w.document.write("<pre>"+t+"</pre>")
+w.print()
 }
 
-// INIT
 renderClientes()
 
 </script>
