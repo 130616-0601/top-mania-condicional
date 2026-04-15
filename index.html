@@ -6,35 +6,73 @@
 
 <style>
 body{margin:0;font-family:Arial;background:#0b0b0b;color:#fff}
-header{padding:15px;font-size:24px;color:#ff2a2a;border-bottom:2px solid #ff2a2a}
+
+header{
+padding:15px;
+font-size:24px;
+color:#ff2a2a;
+border-bottom:2px solid #ff2a2a
+}
+
+#inicio{
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+#inicio img{
+width:300px;
+opacity:0.2;
+}
+
+#inicio button{
+padding:15px;
+background:#ff2a2a;
+color:#fff;
+border:none;
+cursor:pointer;
+margin-top:20px;
+}
 
 .container{display:flex;height:calc(100vh - 60px)}
 
 .left{width:320px;border-right:2px solid #ff2a2a;padding:10px}
 .right{flex:1;padding:15px}
 
-input{width:100%;padding:10px;margin-bottom:10px;background:#111;border:1px solid #ff2a2a;color:#fff}
+input{
+width:100%;
+padding:10px;
+margin-bottom:10px;
+background:#111;
+border:1px solid #ff2a2a;
+color:#fff
+}
+
 button{padding:8px;margin:3px;cursor:pointer}
 
 .modo{border:1px solid #ff2a2a;padding:6px;cursor:pointer}
 .ativo{background:#ff2a2a}
 
-.cod{border:1px solid #ff2a2a;padding:6px;margin:4px 0;display:flex;justify-content:space-between}
-
-.copy{background:#ff2a2a;font-size:10px;padding:3px;cursor:pointer}
-
-.devolvido{color:#00c853;text-decoration:line-through}
-
-#inicio{
+.cod{
+border:1px solid #ff2a2a;
+padding:6px;
+margin:4px 0;
 display:flex;
-justify-content:center;
-align-items:center;
-height:calc(100vh - 60px);
+justify-content:space-between
 }
 
-#inicio img{
-width:60%;
-opacity:0.2;
+.copy{
+background:#ff2a2a;
+font-size:10px;
+padding:3px;
+cursor:pointer
+}
+
+.devolvido{
+color:#00c853;
+text-decoration:line-through
 }
 
 #app{display:none}
@@ -45,10 +83,13 @@ opacity:0.2;
 
 <header>CONTROLE DE CONDICIONAL</header>
 
+<!-- TELA INICIAL -->
 <div id="inicio">
 <img src="logo.png">
+<button onclick="abrirSistema()">ENTRAR</button>
 </div>
 
+<!-- SISTEMA -->
 <div id="app" class="container">
 
 <div class="left">
@@ -102,9 +143,10 @@ let modo="add"
 function abrirSistema(){
 document.getElementById("inicio").style.display="none"
 document.getElementById("app").style.display="flex"
+renderClientes()
 }
 
-// VOLTAR INICIO
+// FECHAR
 function fechar(){
 clienteAtual=null
 condAtual=null
@@ -161,8 +203,6 @@ listaClientes.appendChild(d)
 function abrirCliente(i){
 clienteAtual=clientes[i]
 condAtual=null
-
-abrirSistema()
 
 clienteNome.innerText=
 `${clienteAtual.nome} | CPF:${clienteAtual.cpf} | Tel:${clienteAtual.telefone}`
@@ -245,29 +285,18 @@ salvar()
 alert("Finalizado")
 }
 
-// IMPRESSÃO ENTREGA
+// IMPRESSÃO
 function imprimirEntrega(){
 let txt=`CONDICIONAL\n\nCliente: ${clienteAtual.nome}\n\n`
-
-condAtual.itens.forEach(i=>{
-txt+=i.codigo+"\n"
-})
-
+condAtual.itens.forEach(i=>txt+=i.codigo+"\n")
 txt+=`\n\nAssinatura: ____________________`
-
 imprimir(txt)
 }
 
-// IMPRESSÃO FINAL
 function imprimirFinal(){
 let txt=`FINAL\n\nCliente: ${clienteAtual.nome}\n\n`
-
-condAtual.itens
-.filter(i=>i.status==="pendente")
-.forEach(i=>{
-txt+=i.codigo+"\n"
-})
-
+condAtual.itens.filter(i=>i.status==="pendente")
+.forEach(i=>txt+=i.codigo+"\n")
 imprimir(txt)
 }
 
@@ -276,8 +305,6 @@ let w=window.open()
 w.document.write("<pre>"+t+"</pre>")
 w.print()
 }
-
-renderClientes()
 
 </script>
 
