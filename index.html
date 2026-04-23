@@ -251,7 +251,7 @@ historico.appendChild(d)
 addBtn.onclick=()=>{modo="add";addBtn.classList.add("ativo");retBtn.classList.remove("ativo")}
 retBtn.onclick=()=>{modo="ret";retBtn.classList.add("ativo");addBtn.classList.remove("ativo")}
 
-// 🔥 AQUI ESTÁ A CORREÇÃO PRINCIPAL
+// ✅ CORREÇÃO AQUI
 scan.addEventListener("keydown",e=>{
 if(e.key==="Enter"){
 let cod=scan.value.trim()
@@ -263,15 +263,11 @@ if(modo==="add"){
 condAtual.itens.push({codigo:cod,status:"pendente"})
 }else{
 
-let item = condAtual.itens.find(x=>x.codigo===cod)
+// 🔥 AGORA REMOVE UM PENDENTE POR VEZ
+let item = condAtual.itens.find(x=>x.codigo===cod && x.status==="pendente")
 
 if(!item){
-alert("❌ Esse código não faz parte deste condicional")
-return
-}
-
-if(item.status==="devolvido"){
-alert("⚠️ Esse item já foi devolvido")
+alert("❌ Esse código não faz parte ou já foi totalmente devolvido")
 return
 }
 
